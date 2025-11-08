@@ -204,7 +204,9 @@ This project is licensed under the MIT License – see the LICENSE file for deta
 ## 📞 Support
 
 For questions, feature requests, or collaboration inquiries:
+
 📧 Project Maintainer: Sanchit Borikar
+
 🌐 GitHub Issues: Submit here
 
 “Building a sustainable future — one verified carbon credit at a time.”
