@@ -1,17 +1,191 @@
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "react-router-dom";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { DottedSurface } from "@/components/DottedSurface";
 import { 
-  Waves, 
-  Shield, 
-  TrendingUp, 
-  Globe, 
-  ArrowRight, 
-  CheckCircle,
-  Leaf,
-  Database
+  Waves, Shield, TrendingUp, Globe, ArrowRight, CheckCircle, Leaf, Database,
+  MessageCircle, X, Send, Bot,
+  Mic, Languages
 } from "lucide-react";
 
+// --- PASTE YOUR GEMINI API KEY HERE ---
+const GEMINI_API_KEY = "AIzaSyAyuQAl0k_hvZC-Ruj4BJmiO99jVQeRiP8";
+// 🚨 Security Warning: For personal projects only. Protect your key in production.
+
+// --- TYPE DEFINITIONS FOR SPEECH RECOGNITION ---
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+}
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+}
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
+
+// --- "CREDIFY" CHATBOT COMPONENT ---
+const Chatbot = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState([
+    { role: 'ai', text: "Hello! I am Credify, your AI assistant. How can I help you today?" }
+  ]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [language, setLanguage] = useState('en-US');
+  
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+      console.warn("Speech recognition not supported in this browser.");
+      return;
+    }
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognitionRef.current = new SpeechRecognition();
+    const recognition = recognitionRef.current;
+    
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = event.results[0][0].transcript;
+      setInput(transcript);
+    };
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      console.error("Speech recognition error:", event.error);
+    };
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+  }, []);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(scrollToBottom, [messages]);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_API_KEY_HERE") {
+      setMessages(prev => [...prev, { role: 'ai', text: "It seems the API Key is missing. Please ask the site administrator to configure it." }]);
+      return;
+    }
+    const userMessage = { role: 'user', text: input };
+    setMessages(prev => [...prev, userMessage]);
+    setInput("");
+    setIsLoading(true);
+
+    try {
+      const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+      const chatHistory = messages.map(msg => ({ role: msg.role === 'ai' ? 'model' : 'user', parts: [{ text: msg.text }] }));
+      const result = await model.generateContent({ contents: [...chatHistory, { role: 'user', parts: [{ text: input }] }] });
+      const response = result.response;
+      const aiMessage = { role: 'ai', text: response.text() };
+      setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      console.error("Gemini API Error:", error);
+      const errorMessage = { role: 'ai', text: "Sorry, I'm having trouble connecting. Please check your API key and try again." };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleMicClick = () => {
+    const recognition = recognitionRef.current;
+    if (!recognition) return;
+    if (isListening) {
+      recognition.stop();
+    } else {
+      recognition.lang = language;
+      recognition.start();
+    }
+    setIsListening(!isListening);
+  };
+  
+  return (
+    <>
+      <div className="fixed bottom-8 right-8 z-50">
+        <Button onClick={() => setIsOpen(!isOpen)} size="lg" className="rounded-full w-16 h-16 bg-gradient-to-br from-ocean-blue to-teal-accent text-white shadow-lg ocean-glow transform hover:scale-110 transition-transform duration-300">
+          {isOpen ? <X className="w-8 h-8" /> : <MessageCircle className="w-8 h-8" />}
+        </Button>
+      </div>
+      
+      {isOpen && (
+        <div className="fixed bottom-28 right-8 z-50 w-[90vw] max-w-md h-[70vh] max-h-[600px] flex flex-col glass-card border-border/50 rounded-2xl overflow-hidden animate-slide-up">
+          <div className="flex items-center justify-between p-4 border-b border-border/50">
+            <h3 className="text-lg font-bold text-foreground">Credify</h3>
+            <div className="flex items-center gap-2">
+              <Languages className="w-5 h-5 text-muted-foreground" />
+              <select 
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                className="bg-transparent text-muted-foreground text-sm border-none focus:ring-0"
+              >
+                <option value="en-US" className="bg-background text-foreground">English</option>
+                <option value="hi-IN" className="bg-background text-foreground">हिन्दी</option>
+                <option value="es-ES" className="bg-background text-foreground">Español</option>
+                <option value="fr-FR" className="bg-background text-foreground">Français</option>
+                <option value="de-DE" className="bg-background text-foreground">Deutsch</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="flex-1 p-4 overflow-y-auto space-y-4">
+            {messages.map((msg, index) => (
+              <div key={index} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                {msg.role === 'ai' && (
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-ocean-blue to-teal-accent flex items-center justify-center flex-shrink-0">
+                    <Bot className="w-5 h-5 text-white" />
+                  </div>
+                )}
+                <div className={`max-w-[80%] p-3 rounded-xl ${msg.role === 'user' ? 'bg-primary/80 text-primary-foreground' : 'bg-card/70'}`}>
+                  <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                </div>
+              </div>
+            ))}
+            {isLoading && (
+              <div className="flex gap-3 justify-start">
+                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-ocean-blue to-teal-accent flex items-center justify-center flex-shrink-0">
+                    <Bot className="w-5 h-5 text-white animate-pulse" />
+                  </div>
+                <div className="max-w-[80%] p-3 rounded-xl bg-card/70">
+                  <p className="text-sm">Thinking...</p>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          <div className="p-4 border-t border-border/50">
+            <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+              <input type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder="Ask Credify..." className="flex-1 h-10 w-full rounded-md border border-input bg-background/60 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" disabled={isLoading} />
+              <Button type="button" size="icon" variant="outline" onClick={handleMicClick} disabled={!recognitionRef.current}>
+                <Mic className={`w-5 h-5 ${isListening ? 'text-red-500 animate-pulse' : ''}`} />
+              </Button>
+              <Button type="submit" size="icon" className="bg-primary text-primary-foreground ocean-glow" disabled={isLoading}>
+                <Send className="w-5 h-5" />
+              </Button>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+
+// --- HOMEPAGE COMPONENT ---
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
@@ -20,9 +194,11 @@ const Index = () => {
         <div className="absolute inset-0 hero-gradient"></div>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,hsl(194_95%_48%_/_0.1)_0%,transparent_50%)] opacity-20"></div>
         
+        {/* Dotted Surface Background */}
+        <DottedSurface className="z-0" />
+        
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center max-w-4xl mx-auto">
-            {/* Logo */}
             <div className="mb-8 flex justify-center">
               <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-ocean-blue to-teal-accent flex items-center justify-center ocean-glow">
                 <Waves className="w-10 h-10 text-white" />
@@ -54,6 +230,8 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* --- ALL YOUR ORIGINAL HOMEPAGE SECTIONS ARE RESTORED BELOW --- */}
 
       {/* What is Blue Carbon Section */}
       <section className="py-20 bg-card/20">
@@ -226,6 +404,9 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Renders the Chatbot in the corner */}
+      <Chatbot />
     </div>
   );
 };

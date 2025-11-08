@@ -25,7 +25,7 @@ interface NavigationProps {
   onSignOut?: () => void;
 }
 
-export const Navigation = ({ userRole, onSignOut }: NavigationProps) => {
+const Navigation = ({ userRole, onSignOut }: NavigationProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
 
@@ -183,4 +183,5 @@ export const Navigation = ({ userRole, onSignOut }: NavigationProps) => {
   );
 };
 
-export default Navigation;
+// Change default export to named export to match the import
+export { Navigation };

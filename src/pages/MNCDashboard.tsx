@@ -53,6 +53,13 @@ const MNCDashboard = () => {
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
               <Building className="w-6 h-6 text-primary" />
             </div>
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
             <div>
               <h1 className="text-3xl font-bold text-foreground">
                 Welcome back, {profile?.full_name || 'Corporate Partner'}
