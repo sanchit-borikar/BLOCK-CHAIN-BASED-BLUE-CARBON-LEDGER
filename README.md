@@ -207,6 +207,4 @@ For questions, feature requests, or collaboration inquiries:
 
 📧 Project Maintainer: Sanchit Borikar
 
-🌐 GitHub Issues: Submit here
-
 “Building a sustainable future — one verified carbon credit at a time.”
