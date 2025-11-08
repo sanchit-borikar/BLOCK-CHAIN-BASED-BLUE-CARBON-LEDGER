@@ -149,8 +149,6 @@ npm run dev
 bun dev
 ```
 
-Default URL: http://localhost:5173
-
 ## 🧭 Usage Instructions
 
 - Connect Wallet: Use MetaMask or Web3 wallet
