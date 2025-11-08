@@ -10,9 +10,8 @@ import {
   Mic, Languages
 } from "lucide-react";
 
-// --- PASTE YOUR GEMINI API KEY HERE ---
-const GEMINI_API_KEY = "AIzaSyAyuQAl0k_hvZC-Ruj4BJmiO99jVQeRiP8";
-// 🚨 Security Warning: For personal projects only. Protect your key in production.
+// Load API key from environment variables
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 // --- TYPE DEFINITIONS FOR SPEECH RECOGNITION ---
 interface SpeechRecognitionEvent extends Event {

@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 
 // --- NEW: Add your Gemini API Key here for the chatbot ---
-const GEMINI_API_KEY = "AIzaSyAyuQAl0k_hvZC-Ruj4BJmiO99jVQeRiP8";
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 // --- NEW: TYPE DEFINITIONS for chatbot's speech recognition ---
 interface SpeechRecognitionEvent extends Event { results: SpeechRecognitionResultList; }

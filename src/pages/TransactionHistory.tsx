@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 // --- PASTE YOUR GEMINI API KEY HERE ---
-const GEMINI_API_KEY = "AIzaSyAyuQAl0k_hvZC-Ruj4BJmiO99jVQeRiP8";
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 // --- TYPE DEFINITIONS ---
 interface SpeechRecognitionEvent extends Event { results: SpeechRecognitionResultList; }

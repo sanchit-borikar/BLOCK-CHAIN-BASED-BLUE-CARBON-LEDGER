@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 
 // --- PASTE YOUR GEMINI API KEY HERE ---
-const GEMINI_API_KEY = "AIzaSyAyuQAl0k_hvZC-Ruj4BJmiO99jVQeRiP8";
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 // 🚨 Security Warning: For personal projects only. Protect your key in production.
 
 // --- TYPE DEFINITIONS ---

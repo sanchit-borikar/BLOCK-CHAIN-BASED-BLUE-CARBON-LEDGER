@@ -9,7 +9,7 @@ import {
 import { Navigation } from "@/components/ui/navigation";
 
 // --- PASTE YOUR API KEY HERE. THIS IS THE ONLY LINE YOU NEED TO EDIT. ---
-const GEMINI_API_KEY = "AIzaSyAyuQAl0k_hvZC-Ruj4BJmiO99jVQeRiP8";
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 // 🚨 Security Warning: This is for personal projects only. Do not expose API keys in production apps.
 
 // --- TYPE DEFINITIONS FOR SPEECH RECOGNITION ---
