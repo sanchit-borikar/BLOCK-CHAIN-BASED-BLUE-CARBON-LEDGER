@@ -80,10 +80,13 @@ export function DottedSurface({ className, ...props }: DottedSurfaceProps) {
     scene.add(points);
 
     let count = 0;
-    let animationId: number;
+    let animationId: number | null = null;
+    let running = true; // controls whether the animation loop should run
 
     // Animation function
     const animate = () => {
+      // schedule next frame only if running
+      if (!running) return;
       animationId = requestAnimationFrame(animate);
 
       const positionAttribute = geometry.attributes.position;
@@ -116,6 +119,22 @@ export function DottedSurface({ className, ...props }: DottedSurfaceProps) {
 
     window.addEventListener('resize', handleResize);
 
+    // Pause animation when the tab is hidden to save CPU
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        running = false;
+        if (animationId) cancelAnimationFrame(animationId);
+        animationId = null;
+      } else {
+        if (!running) {
+          running = true;
+          animate();
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     // Start animation
     animate();
 
@@ -132,10 +151,12 @@ export function DottedSurface({ className, ...props }: DottedSurfaceProps) {
     // Cleanup function
     return () => {
       window.removeEventListener('resize', handleResize);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+
+      running = false;
+      if (animationId) cancelAnimationFrame(animationId);
 
       if (sceneRef.current) {
-        cancelAnimationFrame(sceneRef.current.animationId);
-
         // Clean up Three.js objects
         sceneRef.current.scene.traverse((object) => {
           if (object instanceof THREE.Points) {

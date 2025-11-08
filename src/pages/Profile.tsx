@@ -162,6 +162,10 @@ const ProfilePage = () => {
     const [reportText, setReportText] = useState("");
     const [isReportLoading, setIsReportLoading] = useState(false);
 
+    // Use authenticated profile name
+    const { profile, user } = useAuth();
+    const displayName = profile?.full_name || user?.email || 'John Doe';
+
     // --- NEW: Function to generate the report using Gemini ---
     const handleGenerateAuditReport = async () => {
         if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") { 
@@ -175,10 +179,10 @@ const ProfilePage = () => {
         const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
         
-        const prompt = `You are a professional auditor for a carbon credit marketplace. Generate a comprehensive sustainability audit report for a user named "John Doe". The report should be a summary of all the data visible on their profile page.
+    const prompt = `You are a professional auditor for a carbon credit marketplace. Generate a comprehensive sustainability audit report for a user named "${displayName}". The report should be a summary of all the data visible on their profile page.
         
         The report must be structured with the following sections: 
-        1. Executive Summary: A brief overview of John Doe's climate identity and impact.
+    1. Executive Summary: A brief overview of ${displayName}'s climate identity and impact.
         2. Carbon Offset Analysis: State the total offset of ${totalOffset} tons and its environmental equivalents.
         3. Portfolio Highlights: Mention the achievements like "${badges.map(b => b.title).join(', ')}".
         4. Recent Activity Summary: Briefly summarize the transactions provided.
@@ -187,7 +191,7 @@ const ProfilePage = () => {
 
         Make the report look official, detailed, and professional.
         
-        Transaction Data for summary: ${JSON.stringify(transactions, null, 2)}`;
+    Transaction Data for summary: ${JSON.stringify(transactions, null, 2)}`;
 
         try {
             const result = await model.generateContent(prompt);
@@ -216,7 +220,7 @@ const ProfilePage = () => {
             <Navigation />
             <div className="pt-20 pb-12">
                 <div className="container mx-auto px-4">
-                    <ProfileHeader name="John Doe" totalOffset={totalOffset} />
+                    <ProfileHeader name={displayName} totalOffset={totalOffset} />
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* Main Content */}
                         <div className="lg:col-span-2 space-y-8">

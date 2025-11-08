@@ -1,9 +1,10 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, Suspense, lazy } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { DottedSurface } from "@/components/DottedSurface";
+// Lazy-load the heavy Three.js background to improve initial bundle and startup
+const DottedSurface = lazy(() => import('@/components/DottedSurface').then(m => ({ default: m.DottedSurface })));
 import { 
   Waves, Shield, TrendingUp, Globe, ArrowRight, CheckCircle, Leaf, Database,
   MessageCircle, X, Send, Bot,
@@ -11,7 +12,13 @@ import {
 } from "lucide-react";
 
 // Load API key from environment variables
+// Load and verify API key
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+if (!GEMINI_API_KEY) {
+  console.error("Gemini API key is missing from environment variables!");
+} else {
+  console.log("Gemini API key loaded successfully");
+}
 
 // --- TYPE DEFINITIONS FOR SPEECH RECOGNITION ---
 interface SpeechRecognitionEvent extends Event {
@@ -71,6 +78,21 @@ const Chatbot = () => {
 
   useEffect(scrollToBottom, [messages]);
 
+  // Test API connection on component mount
+  useEffect(() => {
+    const testAPI = async () => {
+      try {
+        const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        const result = await model.generateContent("Hello");
+        console.log("API Test Success:", result.response.text());
+      } catch (error) {
+        console.error("API Test Failed:", error);
+      }
+    };
+    testAPI();
+  }, []);
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -84,16 +106,27 @@ const Chatbot = () => {
     setIsLoading(true);
 
     try {
+      console.log("Using API Key:", GEMINI_API_KEY.substring(0, 8) + "...");
       const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-      const chatHistory = messages.map(msg => ({ role: msg.role === 'ai' ? 'model' : 'user', parts: [{ text: msg.text }] }));
-      const result = await model.generateContent({ contents: [...chatHistory, { role: 'user', parts: [{ text: input }] }] });
-      const response = result.response;
-      const aiMessage = { role: 'ai', text: response.text() };
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        const chatHistory = messages.map(msg => ({ role: msg.role === 'ai' ? 'model' : 'user', parts: [{ text: msg.text }] }));
+        const result = await model.generateContent({ contents: [...chatHistory, { role: 'user', parts: [{ text: input }] }] });
+      
+      if (!result.response) {
+        throw new Error("No response received from the API");
+      }
+
+      const aiMessage = { 
+        role: 'ai', 
+        text: result.response.text() || "I apologize, but I couldn't generate a response."
+      };
       setMessages(prev => [...prev, aiMessage]);
     } catch (error) {
-      console.error("Gemini API Error:", error);
-      const errorMessage = { role: 'ai', text: "Sorry, I'm having trouble connecting. Please check your API key and try again." };
+      console.error("Detailed Gemini API Error:", error);
+      const errorMessage = { 
+        role: 'ai', 
+        text: `Error: ${error.message || "Unknown error occurred. Please try again."}`
+      };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
@@ -193,8 +226,10 @@ const Index = () => {
         <div className="absolute inset-0 hero-gradient"></div>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,hsl(194_95%_48%_/_0.1)_0%,transparent_50%)] opacity-20"></div>
         
-        {/* Dotted Surface Background */}
-        <DottedSurface className="z-0" />
+        {/* Dotted Surface Background (lazy-loaded) */}
+        <Suspense fallback={null}>
+          <DottedSurface className="z-0" />
+        </Suspense>
         
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center max-w-4xl mx-auto">
